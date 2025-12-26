@@ -1,0 +1,54 @@
+{
+  "name": "pixelforge",
+  "version": "1.0.0",
+  "description": "Distributed image processing system",
+  "homepage": "https://github.com/DaniielDz/PixelForge#readme",
+  "bugs": {
+    "url": "https://github.com/DaniielDz/PixelForge/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DaniielDz/PixelForge.git"
+  },
+  "license": "ISC",
+  "author": "Daniel Diaz",
+  "type": "module",
+  "main": "dist/api/main.js",
+  "scripts": {
+    "dev:api": "tsx watch src/api/server.ts",
+    "dev:worker": "tsx watch src/worker/main.ts",
+    "build": "tsc",
+    "start:api": "node dist/api/main.js",
+    "start:worker": "node dist/worker/main.js",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev"
+  },
+  "keywords": [
+    "image-processing",
+    "microservices",
+    "bullmq"
+  ],
+  "devDependencies": {
+    "@types/express": "5.0.6",
+    "@types/multer": "2.0.0",
+    "@types/node": "25.0.3",
+    "eslint": "9.39.2",
+    "eslint-config-prettier": "10.1.8",
+    "globals": "16.5.0",
+    "prettier": "3.7.4",
+    "prisma": "7.2.0",
+    "tsx": "4.21.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.50.1"
+  },
+  "dependencies": {
+    "@prisma/client": "7.2.0",
+    "bullmq": "5.66.3",
+    "express": "5.2.1",
+    "multer": "2.0.2",
+    "sharp": "0.34.5",
+    "zod": "4.2.1"
+  }
+}
