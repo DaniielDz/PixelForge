@@ -1,9 +1,10 @@
 # PixelForge - Sistema Distribuido de Procesamiento de Imágenes
 
-![Status](https://img.shields.io/badge/status-active-success.svg)
-![Node](https://img.shields.io/badge/node-v20+-green.svg)
-![Docker](https://img.shields.io/badge/docker-compose-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Node.js](https://img.shields.io/badge/Node.js-20232A?style=for-the-badge&logo=node.js&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Redis](https://img.shields.io/badge/redis-%23DD0031.svg?style=for-the-badge&logo=redis&logoColor=white)
+![Postgres](https://img.shields.io/badge/postgres-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white)
 
 **PixelForge** es una arquitectura de microservicios diseñada para el procesamiento asíncrono de imágenes de alto rendimiento. Desacopla la recepción de archivos de su procesamiento utilizando colas de mensajes, garantizando que la API permanezca receptiva bajo alta carga.
 
