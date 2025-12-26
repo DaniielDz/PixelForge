@@ -15,7 +15,7 @@
   "type": "module",
   "main": "dist/api/main.js",
   "scripts": {
-    "dev:api": "tsx watch src/api/main.ts",
+    "dev:api": "tsx watch src/api/server.ts",
     "dev:worker": "tsx watch src/worker/main.ts",
     "build": "tsc",
     "start:api": "node dist/api/main.js",
