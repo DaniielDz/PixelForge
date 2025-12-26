@@ -1,0 +1,22 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Environment variables
+.env
+
+# Build outputs
+dist
+build
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docker Volumes (IMPORTANTE: No subir la data de DB/Minio al repo)
+docker_data/
+
+# OS specific
+.DS_Store
+Thumbs.db

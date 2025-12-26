@@ -1,0 +1,121 @@
+services:
+  # DATABASE (PostgreSQL)
+  db:
+    image: postgres:16.11-alpine3.23
+    container_name: pixelforge_db
+    restart: unless-stopped
+    ports:  
+      - "${DB_PORT}:5432" # Expuesto para conectar herramientas locales como TablePlus/DBeaver
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - ./docker_data/postgres:/var/lib/postgresql/data
+    networks:
+      - pixelforge_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # CACHE & QUEUE BROKER (Redis)
+  redis:
+    image: redis:8.4.0-alpine3.22
+    container_name: pixelforge_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes # Persistencia activada
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - ./docker_data/redis:/data
+    networks:
+      - pixelforge_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # OBJECT STORAGE (MinIO - S3 Compatible)
+  minio:
+    image: minio/minio:latest
+    container_name: pixelforge_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    ports:
+      - "${S3_PORT}:9000" # API S3
+      - "9001:9001"       # Console UI
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY}
+    volumes:
+      - ./docker_data/minio:/data
+    networks:
+      - pixelforge_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # MINIO SETUP (Init Script)
+  # Servicio efímero: Crea el bucket automáticamente y se apaga.
+  createbuckets:
+    image: minio/mc
+    container_name: pixelforge_setup
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set myminio http://minio:9000 ${S3_ACCESS_KEY} ${S3_SECRET_KEY};
+      /usr/bin/mc mb myminio/${S3_BUCKET_NAME};
+      /usr/bin/mc anonymous set public myminio/${S3_BUCKET_NAME};
+      exit 0;
+      "
+    networks:
+      - pixelforge_network
+
+  # -----------------------------------------------------------------------------
+  # APP SERVICES (Comentados hasta la Fase 7)
+  # Descomentar cuando tengamos los Dockerfiles listos
+  # -----------------------------------------------------------------------------
+  # api:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.api
+  #   container_name: pixelforge_api
+  #   ports:
+  #     - "${PORT}:${PORT}"
+  #   env_file: .env
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #     minio:
+  #       condition: service_healthy
+  #   networks:
+  #     - pixelforge_network
+
+  # worker:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.worker
+  #   container_name: pixelforge_worker
+  #   env_file: .env
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #     minio:
+  #       condition: service_healthy
+  #   networks:
+  #     - pixelforge_network
+
+networks:
+  pixelforge_network:
+    driver: bridge
