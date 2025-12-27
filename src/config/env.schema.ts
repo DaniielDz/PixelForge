@@ -22,6 +22,7 @@ export const envSchema = z.object({
   S3_ACCESS_KEY: z.string().min(1),
   S3_SECRET_KEY: z.string().min(1),
   S3_BUCKET_NAME: z.string().default('pixelforge-bucket'),
+  S3_REGION: z.string().default('us-east-1'),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

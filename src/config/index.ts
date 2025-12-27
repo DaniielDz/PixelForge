@@ -28,5 +28,8 @@ export const config = {
     accessKey: env.S3_ACCESS_KEY,
     secretKey: env.S3_SECRET_KEY,
     bucket: env.S3_BUCKET_NAME,
+    region: env.S3_REGION,
   },
 };
+
+export { env };
