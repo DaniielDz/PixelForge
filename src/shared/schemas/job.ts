@@ -9,19 +9,21 @@ export const ALLOWED_DIMENSIONS = [
 
 export const ALLOWED_FORMATS = ['webp', 'jpeg', 'png', 'avif'] as const;
 
-export const createJobSchema = z
-  .object({
-    width: z.number().int().positive(),
-    height: z.number().int().positive(),
-    format: z.enum(ALLOWED_FORMATS).default('webp'),
-  })
-  .refine(
-    (data) =>
-      ALLOWED_DIMENSIONS.some((dim) => dim.width === data.width && dim.height === data.height),
-    {
-      message: `Dimensions must be one of: ${ALLOWED_DIMENSIONS.map((d) => `${d.width}x${d.height}`).join(', ')}`,
-    },
-  );
+export const createJobSchema = z.object({
+  body: z
+    .object({
+      width: z.coerce.number().int().positive(),
+      height: z.coerce.number().int().positive(),
+      format: z.enum(ALLOWED_FORMATS).default('webp'),
+    })
+    .refine(
+      (data) =>
+        ALLOWED_DIMENSIONS.some((dim) => dim.width === data.width && dim.height === data.height),
+      {
+        message: `Invalid dimensions. Allowed: ${ALLOWED_DIMENSIONS.map((d) => `${d.width}x${d.height}`).join(', ')}`,
+      },
+    ),
+});
 
 export const jobPayloadSchema = z.object({
   jobId: z.cuid(),
@@ -33,5 +35,5 @@ export const jobPayloadSchema = z.object({
   mimeType: z.string(),
 });
 
-export type CreateJobInput = z.infer<typeof createJobSchema>;
+export type CreateJobInput = z.infer<typeof createJobSchema>['body'];
 export type JobPayload = z.infer<typeof jobPayloadSchema>;
