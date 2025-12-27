@@ -25,6 +25,7 @@ model Job {
   processedFileUrl String?
   targetWidth      Int
   targetHeight     Int
+  outputFormat     String    @default("webp")
   errorMessage     String?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
