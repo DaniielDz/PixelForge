@@ -17,14 +17,14 @@ This file tracks the development progress of the PixelForge project. The Agent m
 - [x] Folder Structure (Monorepo pattern: api, worker, shared).
 - [x] Environment Variable Validation (Zod).
 
-### 🚧 Current Phase: Phase 3: Database & Models
+### Phase 3: Database & Models
 
-- [ ] Prisma Schema definition (Job model, JobStatus enum).
-- [ ] Initial migration to Postgres.
-- [ ] Prisma Client generation.
-- [ ] Shared Zod Schemas (Dimensions Allowlist).
+- [x] Prisma Schema definition (Job model, JobStatus enum).
+- [x] Initial migration to Postgres.
+- [x] Prisma Client generation.
+- [x] Shared Zod Schemas (Dimensions Allowlist).
 
-### Phase 4 - API Service (Producer)
+### 🚧 Current Phase: Phase 4 - API Service (Producer)
 
 Objective: Enable image upload and job enqueuing.
 

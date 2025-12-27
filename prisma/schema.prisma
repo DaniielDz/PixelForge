@@ -1,0 +1,35 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model Job {
+  id               String    @id @default(cuid())
+  status           JobStatus @default(PENDING)
+  originalFileName String
+  mimeType         String
+  rawFileUrl       String
+  processedFileUrl String?
+  targetWidth      Int
+  targetHeight     Int
+  outputFormat     String    @default("webp")
+  errorMessage     String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
