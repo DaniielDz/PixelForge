@@ -1,26 +1,25 @@
 import dotenv from 'dotenv';
+import { setupWorker } from './worker.setup.js';
 dotenv.config();
 
-const startWorker = async () => {
-  console.log('👷 Worker Service starting...');
+const main = async () => {
+  console.log('🚀 Worker Service starting...');
 
-  // Aquí iría la conexión a Redis/BullMQ
+  const worker = setupWorker();
 
-  // Simulación de proceso vivo
-  const heartbeat = setInterval(() => {
-    console.log('👷 Worker is alive and waiting for jobs...');
-  }, 5000);
+  console.log(`✅ Worker is listening on queue: ${worker.name}`);
 
-  // Manejo de señales para matar el worker limpiamente
-  process.on('SIGTERM', async () => {
-    console.log('🛑 Worker shutting down...');
-    clearInterval(heartbeat);
-    // await worker.close(); // Cuando tengas BullMQ
+  const shutdown = async () => {
+    console.log('🛑 Shutting down worker...');
+    await worker.close();
     process.exit(0);
-  });
+  };
+
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
 };
 
-startWorker().catch((err) => {
+main().catch((err) => {
   console.error('🔥 Fatal error in worker:', err);
   process.exit(1);
 });

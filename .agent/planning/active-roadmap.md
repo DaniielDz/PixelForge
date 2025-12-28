@@ -24,25 +24,25 @@ This file tracks the development progress of the PixelForge project. The Agent m
 - [x] Prisma Client generation.
 - [x] Shared Zod Schemas (Dimensions Allowlist).
 
-### 🚧 Current Phase: Phase 4 - API Service (Producer)
+### Phase 4 - API Service (Producer)
 
 Objective: Enable image upload and job enqueuing.
 
-- [ ] Multer Config: Implement middleware to handle multipart/form-data.
-- [ ] Controller Validation: Validate request body (width, height) using shared CreateJobSchema.
-- [ ] MinIO Integration: Upload the received raw file to the /raw bucket.
-- [ ] BullMQ Integration: Create the image-processing queue and add the job.
-- [ ] Endpoint: Implement POST /api/v1/jobs returning the jobId.
+- [x] Multer Config: Implement middleware to handle multipart/form-data.
+- [x] Controller Validation: Validate request body (width, height) using shared CreateJobSchema.
+- [x] MinIO Integration: Upload the received raw file to the /raw bucket.
+- [x] BullMQ Integration: Create the image-processing queue and add the job.
+- [x] Endpoint: Implement POST /api/v1/jobs returning the jobId.
+
+### 🚧 Current Phase: Phase 5: Worker Service (Consumer)
+
+- [x] Configure BullMQ Worker.
+- [x] Implement file download from MinIO.
+- [x] Image Processing with Sharp (Resize + Format).
+- [x] Upload processed result to MinIO (/processed).
+- [x] Update Job status in DB (COMPLETED or FAILED).
 
 ## 🔮 Future Phases (Pending)
-
-### Phase 5: Worker Service (Consumer)
-
-- [ ] Configure BullMQ Worker.
-- [ ] Implement file download from MinIO.
-- [ ] Image Processing with Sharp (Resize + Format).
-- [ ] Upload processed result to MinIO (/processed).
-- [ ] Update Job status in DB (COMPLETED or FAILED).
 
 ### Phase 6: Polling & Status
 
