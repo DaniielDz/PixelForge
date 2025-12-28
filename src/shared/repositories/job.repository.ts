@@ -1,5 +1,5 @@
-import { prisma } from '../../shared/prismaClient.js';
-import { JobEntity, CreateJobRepositoryDTO } from '../types/job.types.js';
+import { prisma } from '../prismaClient.js';
+import { JobEntity, CreateJobRepositoryDTO } from '../../api/types/job.types.js';
 
 export const JobRepository = {
   async create(data: CreateJobRepositoryDTO): Promise<JobEntity> {
@@ -20,6 +20,22 @@ export const JobRepository = {
     const job = await prisma.job.update({
       where: { id },
       data: { status },
+    });
+    return job as JobEntity;
+  },
+
+  async markAsCompleted(id: string, url: string): Promise<JobEntity> {
+    const job = await prisma.job.update({
+      where: { id },
+      data: { processedFileUrl: url, status: 'COMPLETED' },
+    });
+    return job as JobEntity;
+  },
+
+  async markAsFailed(id: string, errorMessage: string): Promise<JobEntity> {
+    const job = await prisma.job.update({
+      where: { id },
+      data: { status: 'FAILED', errorMessage },
     });
     return job as JobEntity;
   },

@@ -28,6 +28,7 @@ export const createJobSchema = z.object({
 export const jobPayloadSchema = z.object({
   jobId: z.cuid(),
   rawFileUrl: z.url(),
+  objectName: z.string(),
   targetWidth: z.number().int().positive(),
   targetHeight: z.number().int().positive(),
   outputFormat: z.enum(ALLOWED_FORMATS),

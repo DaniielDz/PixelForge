@@ -33,6 +33,15 @@ export async function uploadFile(
   await minioClient.putObject(bucketName, objectName, stream, size, metadata);
 }
 
+/** Download a file from MinIO
+ * @param bucketName - Name of the bucket
+ * @param objectName - Name/path of the object in the bucket
+ * @returns Readable stream of the object
+ */
+export async function getFile(bucketName: string, objectName: string): Promise<Readable> {
+  return await minioClient.getObject(bucketName, objectName);
+}
+
 /**
  * Generate a file URL for MinIO object
  * Note: This generates the internal URL format
