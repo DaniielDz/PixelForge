@@ -50,9 +50,13 @@ export async function getFile(bucketName: string, objectName: string): Promise<R
  */
 export async function getFileUrl(bucketName: string, objectName: string): Promise<string> {
   // Para desarrollo local
-  if (env.NODE_ENV === 'development') {
+  if (env.NODE_ENV === 'development' || env.S3_ENDPOINT === 'minio') {
     const protocol = env.S3_USE_SSL ? 'https' : 'http';
-    return `${protocol}://${env.S3_ENDPOINT}:${env.S3_PORT}/${bucketName}/${objectName}`;
+
+    const host = env.S3_PUBLIC_HOST || 'localhost';
+    const port = env.S3_PUBLIC_PORT || env.S3_PORT;
+
+    return `${protocol}://${host}:${port}/${bucketName}/${objectName}`;
   }
 
   return await minioClient.presignedGetObject(bucketName, objectName, 24 * 60 * 60);

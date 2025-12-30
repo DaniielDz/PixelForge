@@ -1,0 +1,41 @@
+# Dependencies
+node_modules
+.pnpm-store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+
+# Build outputs
+dist
+build
+
+# Docker
+docker_data/
+Dockerfile*
+docker-compose*.yml
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Documentation
+README.md
+*.md
+
+# Agent files
+.agent
+
+# Test files
+**/*.test.ts
+**/*.spec.ts

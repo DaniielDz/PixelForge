@@ -51,9 +51,8 @@ Objective: Enable image upload and job enqueuing.
 
 ### 🚧 Current Phase: Phase 7: Production & Cleanup
 
-- [ ] Optimized Dockerfile for Production (API).
-- [ ] Optimized Dockerfile for Production (Worker).
-- [ ] Temp files cleanup script/mechanism.
+- [x] Optimized Dockerfile for Production (API).
+- [x] Optimized Dockerfile for Production (Worker).
 
 ## 📌 Context Notes
 
