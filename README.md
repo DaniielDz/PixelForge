@@ -233,11 +233,11 @@ Se incluye una colección de Postman en `docs/pixelforge.postman_collection.json
 - **Endpoint:** `POST /api/v1/jobs`
 - **Content-Type:** `multipart/form-data`
 
-| Key      | Tipo   | Descripción                                |
-| :------- | :----- | :----------------------------------------- | --- |
-| `file`   | File   | Imagen a procesar (jpg, png).              |     |
-| `width`  | Int    | Ancho objetivo (ej: 1024).                 |
-| `height` | Int    | Alto objetivo (ej: 1024).                  |
+| Key | Tipo | Descripción |
+| :--- | :--- | :--- |
+| `file` | File | Imagen a procesar (jpg, png). |
+| `width` | Int | Ancho objetivo (ej: 1024). |
+| `height` | Int | Alto objetivo (ej: 1024). |
 | `format` | String | Formato de salida (webp, png, jpeg, avif). |
 
 ### 2. Consultar Estado
