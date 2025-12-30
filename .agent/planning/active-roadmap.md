@@ -34,7 +34,7 @@ Objective: Enable image upload and job enqueuing.
 - [x] BullMQ Integration: Create the image-processing queue and add the job.
 - [x] Endpoint: Implement POST /api/v1/jobs returning the jobId.
 
-### 🚧 Current Phase: Phase 5: Worker Service (Consumer)
+### Phase 5: Worker Service (Consumer)
 
 - [x] Configure BullMQ Worker.
 - [x] Implement file download from MinIO.
@@ -42,14 +42,14 @@ Objective: Enable image upload and job enqueuing.
 - [x] Upload processed result to MinIO (/processed).
 - [x] Update Job status in DB (COMPLETED or FAILED).
 
-## 🔮 Future Phases (Pending)
-
 ### Phase 6: Polling & Status
 
-- [ ] Implement GET /api/v1/jobs/:id endpoint.
-- [ ] Return status and final URL (if completed).
+- [x] Implement GET /api/v1/jobs/:id endpoint.
+- [x] Return status and final URL (if completed).
 
-### Phase 7: Production & Cleanup
+## 🔮 Future Phases (Pending)
+
+### 🚧 Current Phase: Phase 7: Production & Cleanup
 
 - [ ] Optimized Dockerfile for Production (API).
 - [ ] Optimized Dockerfile for Production (Worker).
