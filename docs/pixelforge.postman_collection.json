@@ -1,0 +1,116 @@
+{
+  "info": {
+    "_postman_id": "b1b2b3b4-c5c6-4d7e-8f9g-0h1i2j3k4l5m",
+    "name": "PixelForge API",
+    "description": "Collection for PixelForge Producer-Consumer Image Processing API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Jobs",
+      "item": [
+        {
+          "name": "Create Job (Upload Image)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "width",
+                  "value": "1024",
+                  "type": "text"
+                },
+                {
+                  "key": "height",
+                  "value": "1024",
+                  "type": "text"
+                },
+                {
+                  "key": "format",
+                  "value": "webp",
+                  "type": "text",
+                  "description": "Options: jpeg, png, webp, avif"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/jobs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "jobs"
+              ]
+            },
+            "description": "Upload an image to be processed by the worker. Returns a Job ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Job Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/jobs/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "jobs",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "YOUR_JOB_ID_HERE",
+                  "description": "UUID of the job"
+                }
+              ]
+            },
+            "description": "Check the status of a processing job."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+}
