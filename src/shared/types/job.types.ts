@@ -4,10 +4,13 @@ export interface JobEntity {
   originalFileName: string;
   mimeType: string;
   rawFileUrl: string;
+  processedFileUrl?: string;
   targetWidth: number;
   targetHeight: number;
   outputFormat: 'webp' | 'jpeg' | 'png' | 'avif';
+  errorMessage?: string;
   createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface CreateJobRepositoryDTO {
