@@ -1,7 +1,14 @@
 import { prisma } from '../prismaClient.js';
-import { JobEntity, CreateJobRepositoryDTO } from '../../api/types/job.types.js';
+import { JobEntity, CreateJobRepositoryDTO } from '../types/job.types.js';
 
 export const JobRepository = {
+  async findById(id: string): Promise<JobEntity | null> {
+    const job = await prisma.job.findUnique({
+      where: { id },
+    });
+    return job as JobEntity | null;
+  },
+
   async create(data: CreateJobRepositoryDTO): Promise<JobEntity> {
     const job = await prisma.job.create({ data });
 

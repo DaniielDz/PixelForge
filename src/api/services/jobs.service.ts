@@ -3,7 +3,7 @@ import { uploadFile, getFileUrl, minioClient } from '../../shared/services/stora
 import { addImageProcessingJob } from './queueService.js';
 import { env } from '../../config/index.js';
 import { CreateJobInput, JobPayload } from '../../shared/schemas/job.js';
-import { CreateJobRepositoryDTO, JobEntity } from '../types/job.types.js';
+import { CreateJobRepositoryDTO, JobEntity } from '../../shared/types/job.types.js';
 
 export interface JobCreateData extends CreateJobInput {
   status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
@@ -74,5 +74,37 @@ export const JobService = {
 
       throw error;
     }
+  },
+
+  async getJobStatus(jobId: string) {
+    const job = await JobRepository.findById(jobId);
+
+    if (!job) {
+      return null;
+    }
+
+    const response: {
+      jobId: string;
+      status: string;
+      createdAt: Date;
+      updatedAt: Date;
+      processedFileUrl?: string;
+      errorMessage?: string;
+    } = {
+      jobId: job.id,
+      status: job.status,
+      createdAt: job.createdAt,
+      updatedAt: job.updatedAt,
+    };
+
+    if (job.status === 'COMPLETED' && job.processedFileUrl) {
+      response.processedFileUrl = job.processedFileUrl;
+    }
+
+    if (job.status === 'FAILED' && job.errorMessage) {
+      response.errorMessage = job.errorMessage;
+    }
+
+    return response;
   },
 };
