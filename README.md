@@ -6,84 +6,177 @@
 ![Redis](https://img.shields.io/badge/redis-%23DD0031.svg?style=for-the-badge&logo=redis&logoColor=white)
 ![Postgres](https://img.shields.io/badge/postgres-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white)
 
-**PixelForge** es una arquitectura de microservicios diseñada para el procesamiento asíncrono de imágenes de alto rendimiento. Desacopla la recepción de archivos de su procesamiento utilizando colas de mensajes, garantizando que la API permanezca receptiva bajo alta carga.
+**PixelForge** es una plataforma de procesamiento de imágenes de alto rendimiento diseñada bajo una arquitectura de microservicios orientada a eventos. Su objetivo principal es desacoplar la ingesta de datos del procesamiento intensivo, garantizando escalabilidad, resiliencia y una experiencia de usuario fluida incluso bajo cargas elevadas.
 
-El sistema permite subir imágenes, redimensionarlas y cambiar su formato basándose en una lista estricta de configuraciones permitidas, almacenando los resultados en un sistema compatible con S3 (MinIO).
+El sistema implementa un patrón **Producer-Consumer** robusto, utilizando **BullMQ** y **Redis** para la gestión de colas, y **MinIO** como almacenamiento de objetos compatible con S3.
 
 ## 📋 Tabla de Contenidos
 
 - [Arquitectura del Sistema](#-arquitectura-del-sistema)
+- [Principios de Diseño](#-principios-de-diseño)
 - [Stack Tecnológico](#-stack-tecnológico)
 - [Características Principales](#-características-principales)
+- [Estructura del Proyecto](#-estructura-del-proyecto)
 - [Instalación y Uso](#-instalación-y-uso)
 - [Documentación de la API](#-documentación-de-la-api)
-- [Variables de Entorno](#-variables-de-entorno)
-- [Estructura del Proyecto](#-estructura-del-proyecto)
 
 ## 🏗 Arquitectura del Sistema
 
-El sistema utiliza un patrón **Producer-Consumer** con almacenamiento temporal y persistente.
+La arquitectura separa las responsabilidades en dos servicios principales dockerizados, comunicados asíncronamente.
 
 ```mermaid
-graph LR
-    A[Cliente] -- POST /upload --> B(API Gateway)
-    B -- Valida y Sube Raw --> C[(MinIO Storage)]
-    B -- Crea Job --> D[Redis / BullMQ]
-    D -- Consume Job --> E[Worker Service]
-    E -- Descarga Raw --> C
-    E -- Procesa Imagen --> E
-    E -- Sube Processed --> C
-    E -- Actualiza Estado --> F[(PostgreSQL)]
-    A -- GET /status/:id --> B
-    B -- Lee Estado --> F
+flowchart LR
+    %% --- CONFIGURACIÓN VISUAL ---
+    %% Curvas suaves para las líneas
+    linkStyle default interpolate basis
+
+    %% Definimos los estilos de los subgrafos para que sean contenedores visuales limpios
+    %% fill:transparent hace que se integre con tu tema oscuro/claro
+    classDef container fill:transparent,stroke:#888,stroke-width:1px,stroke-dasharray: 5 5;
+
+    %% --- CAPAS DE LA ARQUITECTURA (STACK) ---
+
+    subgraph UserLayer [📱 Capa de Cliente]
+        direction TB
+        Client((👤 Cliente))
+    end
+
+    subgraph ServiceLayer [⚡ Capa de API]
+        direction TB
+        API[🚀 API Gateway]
+    end
+
+    subgraph QueueLayer [🔄 Capa de Mensajería]
+        direction TB
+        Redis{⚡ Redis / BullMQ}
+    end
+
+    subgraph WorkerLayer [⚙️ Capa de Procesamiento]
+        direction TB
+        Worker[⚙️ Worker Processor]
+    end
+
+    subgraph DataLayer [💾 Capa de Persistencia]
+        direction TB
+        %% Mantenemos TB aquí para que MinIO y Postgres se apilen verticalmente
+        %% al final de la línea, en lugar de extenderse demasiado a la derecha.
+        MinIO[("🪣 MinIO (S3)")]
+        Postgres[("🐘 PostgreSQL")]
+    end
+
+    %% Aplicamos estilo a los contenedores
+    class UserLayer,ServiceLayer,QueueLayer,WorkerLayer,DataLayer container;
+
+    %% --- FLUJO PRINCIPAL (Proceso de Imagen) ---
+
+    %% 1. Ingesta
+    Client -->|1. POST /jobs| API
+
+    %% 2. Distribución
+    API -->|2. Sube Imagen Raw| MinIO
+    API -->|"3. Crea Job (Pending)"| Postgres
+    API -->|4. Encola Job| Redis
+
+    %% 3. Consumo
+    Redis -->|5. Procesa Job| Worker
+
+    %% 4. Procesamiento y Guardado
+    Worker -->|6. Descarga Raw| MinIO
+    Worker -->|7. Sube Procesada| MinIO
+    Worker -->|"8. Actualiza (Completed)"| Postgres
+
+    %% --- FLUJO SECUNDARIO (Lectura) ---
+    Client -.->|9. Polling Status| API
+    API -.->|10. Lee Estado| Postgres
 ```
 
-1. **API Service (Producer)**: Recibe la imagen, valida metadatos con Zod, sube el archivo crudo a MinIO y encola un trabajo en BullMQ.
-2. **Message Broker**: Redis gestiona la cola de trabajos, asegurando persistencia y reintentos.
-3. **Worker Service (Consumer)**: Proceso aislado que toma trabajos, realiza el procesamiento intensivo de CPU (Sharp) y actualiza el estado.
-4. **Storage**: MinIO actúa como un Object Storage compatible con S3 para guardar tanto las imágenes originales como las procesadas
+1.  **API Service (Producer)**:
+    - Punto de entrada RESTful construido con **Express**.
+    - Valida peticiones y tipos de archivo utilizando **Zod**.
+    - Sube la imagen "cruda" a **MinIO**.
+    - Delega el procesamiento enviando un mensaje a la cola de **Redis**.
+
+2.  **Worker Service (Consumer)**:
+    - Servicio independiente que "escucha" nuevos trabajos.
+    - Ejecuta transformaciones de imagen intensivas en CPU (redimensionamiento, conversión de formato) usando **Sharp**.
+    - Gestiona el ciclo de vida del Job y actualiza el estado final en **PostgreSQL**.
+    - Diseñado para escalar horizontalmente según la demanda.
+
+## 🧩 Principios de Diseño
+
+- **Separación de Responsabilidades (SoC):** La API solo gestiona peticiones HTTP; el Worker se encarga de la lógica de negocio pesada.
+- **Código Compartido (Shared Kernel):** Uso de un módulo `shared` para tipos, esquemas de validación (Zod) y constantes, asegurando consistencia entre microservicios.
+- **Fail Fast:** Validaciones estrictas al inicio del flujo para rechazar peticiones inválidas inmediatamente, ahorrando recursos de procesamiento.
+- **Infraestructura Inmutable:** Todo el entorno (DB, Cache, Storage) está contenerizado con Docker, garantizando paridad entre desarrollo y producción.
 
 ---
 
 ## 🚀 Stack Tecnológico
 
-- **Core:** Node.js, TypeScript
+- **Lenguaje:** TypeScript (Strict Mode)
+- **Runtime:** Node.js
 - **API Framework:** Express.js
-- **Procesamiento:** Sharp (High performance image processing)
-- **Colas & Mensajería:** BullMQ, Redis
-- **Base de Datos:** PostgreSQL (Metadatos y estado de jobs)
-- **Validación:** Zod (Schema validation)
-- **Storage:** MinIO (S3 Compatible)  
-  -- **Infraestructura:** Docker, Docker Compose
+- **ORM:** Prisma (PostgreSQL)
+- **Colas:** BullMQ + Redis
+- **Procesamiento de Imágenes:** Sharp
+- **Validación:** Zod
+- **Storage:** MinIO (AWS S3 Compatible)
+- **Infraestructura:** Docker, Docker Compose
 
 ---
 
 ## ✨ Características Principales
 
-- **Procesamiento Asíncrono:**  
-  La API responde en milisegundos devolviendo un `Job ID`, mientras el procesamiento pesado ocurre en segundo plano.
-
-- **Validación Estricta (Allowlist):**  
-  Solo se procesan dimensiones y formatos pre-aprobados para evitar abuso de recursos.
-
-  **Dimensiones permitidas:**
-  - `800x600`
-  - `1280x720`
-  - `1920x1080`
+- **Procesamiento Asíncrono Non-blocking:** La API responde en milisegundos (`202 Accepted`) devolviendo un Job ID, liberando al cliente mientras el servidor procesa en background.
+- **Validación Estricta (Allowlist):** Seguridad por diseño, permitiendo solo formatos y dimensiones preestablecidas.
 
   **Formatos permitidos:**
+  - `WEBP` (Default)
   - `JPEG`
   - `PNG`
-  - `WEBP`
+  - `AVIF`
 
-- **Escalabilidad Horizontal:**  
-  Los Workers pueden escalarse independientemente de la API.
+  **Dimensiones permitidas (WxH):**
+  - `256x256`
+  - `512x512`
+  - `1024x1024`
+  - `1920x1080`
 
-- **Resiliencia:**  
-  Manejo automático de reintentos en caso de fallos en el procesamiento.
+- **Trazabilidad:** Persistencia de metadatos de trabajos en PostgreSQL para auditoría y seguimiento de estados (`queued`, `processing`, `completed`, `failed`).
+- **Almacenamiento Escalable:** Uso de MinIO para simular un entorno de producción S3 real.
 
-- **Entorno Dockerizado:**  
-  Todo el ecosistema se levanta con un solo comando.
+---
+
+## 📂 Estructura del Proyecto
+
+La estructura sigue una organización modular monorepo, centralizando la lógica compartida.
+
+```plaintext
+pixelforge/
+├── src/
+│   ├── api/                 # API REST (Producer)
+│   │   ├── controllers/     # Controladores de endpoints
+│   │   ├── middleware/     # Middlewares (Multer, ErrorHandler, etc.)
+│   │   ├── routes/          # Definición de rutas v1
+│   │   ├── services/        # Servicios de negocio (JobService, StorageService)
+│   │   └── server.ts        # Entrypoint del servidor
+│   ├── worker/              # Worker (Consumer)
+│   │   ├── processors/      # Lógica de procesadores de Jobs
+│   │   └── main.ts          # Entrypoint del Worker
+│   │   └── worker.setup.ts  # Configuración del Worker
+│   ├── shared/              # Núcleo Compartido
+│   │   ├── repositories/    # Capa de acceso a datos y persistencia
+│   │   ├── schemas/         # Esquemas Zod (JobSchema, EnvSchema)
+│   │   ├── services/        # Servicios de negocio
+│   │   ├── types/           # Definiciones de tipos TypeScript
+│   │   └── prismaClient.ts  # Instancia singleton de Prisma
+│   └── config/              # Archivos de configuración general
+├── docs/                    # Documentación y colecciones Postman
+├── docker-compose.yml       # Orquestación de servicios
+├── Dockerfile.api           # Imagen optimizada para API
+├── Dockerfile.worker        # Imagen optimizada para Worker
+└── README.md
+```
 
 ---
 
@@ -91,135 +184,81 @@ graph LR
 
 ### Prerrequisitos
 
-- Docker y Docker Compose instalados.
-- Node.js v18+ (solo si se desea ejecutar fuera de Docker).
+- Docker y Docker Compose.
 
-### Paso 1: Clonar el repositorio
+### Despliegue Local
 
-```bash
-git clone https://github.com/tu-usuario/pixelforge.git
-cd pixelforge
-```
+1.  **Clonar el repositorio**:
 
-### Paso 2: Configurar Variables de Entorno
+    ```bash
+    git clone https://github.com/daniieldz/pixelforge.git
+    cd pixelforge
+    ```
 
-Este comando levantará la API, el Worker, Redis, Postgres y MinIO.
+2.  **Configurar Variables de Entorno**:
+    Copia el archivo de ejemplo para configurar tus variables locales.
 
-```bash
-docker-compose up --build -d
-```
+    ```bash
+    cp .env.example .env
+    ```
 
-> **Nota:** La primera vez tomará unos minutos mientras se construyen las imágenes optimizadas de la API y el Worker.
+    _El archivo `.env.example` ya contiene valores por defecto funcionales para el entorno de Docker local._
 
-**El sistema estará disponible en:**
+3.  **Iniciar servicios**:
 
-- **API**: http://localhost:3000
-- **MinIO Console**: http://localhost:9001 (User/Pass definidos en .env)
+    ```bash
+    docker-compose up --build -d
+    ```
+
+    _Esto levantará API, Worker, Redis, Postgres y MinIO._
+
+4.  **Verificar estado**:
+    ```bash
+    docker-compose ps
+    ```
+
+**Accesos:**
+
+- **API:** http://localhost:3000
+- **MinIO Console:** http://localhost:9001 (User/Pass definidos en `.env`)
 
 ---
 
 ## 📡 Documentación de la API
 
-### 1. Subir una imagen para procesar
+Se incluye una colección de Postman en `docs/pixelforge.postman_collection.json` para facilitar las pruebas.
 
-- Endpoint: POST `POST /api/v1/jobs`
-- Content-Type: `multipart/form-data`
+### 1. Crear Trabajo (Subir Imagen)
 
-**Parámetros (Body):**
-| Key | Tipo | Descripción |
-| --------- | ------ | ------------------------------------ |
-| imageFile | File | Archivo de imagen (jpg, png). |
-| width | Int | Ancho deseado (ej: 1280). |
-| height | Int | Alto deseado (ej: 720). |
-| format | String | Formato de salida (webp, png, jpeg). |
+- **Endpoint:** `POST /api/v1/jobs`
+- **Content-Type:** `multipart/form-data`
 
-**Respuesta Exitosa (202 Accepted):**
+| Key      | Tipo   | Descripción                                |
+| :------- | :----- | :----------------------------------------- | --- |
+| `file`   | File   | Imagen a procesar (jpg, png).              |     |
+| `width`  | Int    | Ancho objetivo (ej: 1024).                 |
+| `height` | Int    | Alto objetivo (ej: 1024).                  |
+| `format` | String | Formato de salida (webp, png, jpeg, avif). |
 
-```json
-{
-  "success": true,
-  "message": "Job created successfully",
-  "data": {
-    "jobId": "550e8400-e29b-41d4-a716-446655440000",
-    "status": "queued"
-  }
-}
-```
-
-### 2. Consultar estado del trabajo
+### 2. Consultar Estado
 
 - **Endpoint:** `GET /api/v1/jobs/:id`
 
-**Respuesta (Procesado):**
+**Respuesta de Ejemplo (Completado):**
 
 ```json
 {
   "jobId": "550e8400-e29b-41d4-a716-446655440000",
   "status": "completed",
   "result": {
-    "url": "http://localhost:9000/pixelforge/processed/imagen_1280x720.webp",
-    "processedAt": "2023-10-27T10:00:00Z"
+    "url": "http://minio:9000/pixelforge-bucket/processed/imagen_1024x1024.webp",
+    "processedAt": "2023-12-30T10:00:00Z"
   }
 }
 ```
 
 ---
 
-## 🔐 Variables de Entorno
-
-```.env
-# Server
-PORT=3000
-NODE_ENV=development
-
-# Database
-DATABASE_URL="postgresql://user:password@postgres:5432/pixelforge_db"
-
-# Redis
-REDIS_HOST=redis
-REDIS_PORT=6379
-
-# MinIO (S3 Compatible)
-S3_ENDPOINT=minio
-S3_PORT=9000
-S3_ACCESS_KEY=minioadmin
-S3_SECRET_KEY=minioadmin
-S3_BUCKET_NAME=pixelforge-bucket
-S3_USE_SSL=false
-```
-
----
-
-## 📂 Estructura del Proyecto
-
-```plaintext
-pixelforge/
-├── src/
-│   ├── api/             # Código del servidor Express (Producer)
-│   │   ├── controllers/
-│   │   ├── routes/
-│   │   └── validators/  # Esquemas Zod
-│   ├── worker/          # Código del Worker (Consumer)
-│   │   └── processors/  # Lógica de Sharp
-│   ├── config/          # Configuración de DB, Redis, S3
-│   └── shared/          # Tipos e interfaces compartidas
-├── docker-compose.yml
-├── Dockerfile.api
-├── Dockerfile.worker
-└── README.md
-```
-
----
-
-## 🔮 Roadmap y Mejoras Futuras
-
-- [ ] Implementación de Webhooks para notificar al cliente cuando el trabajo termine (evitar polling).
-- [ ] Integración con AWS S3 real para entorno de producción.
-- [ ] Agregar limpieza automática (TTL) de imágenes originales tras 24hs.
-- [ ] Dashboard visual para monitorear la cola de BullMQ (Bull-Board).
-
----
-
 ## 👤 Autor
 
-Desarrollado por Daniel Díaz.
+Desarrollado por [Daniel Díaz](https://www.linkedin.com/in/daniiel-diazz).
