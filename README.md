@@ -11,6 +11,7 @@
 El sistema permite subir imágenes, redimensionarlas y cambiar su formato basándose en una lista estricta de configuraciones permitidas, almacenando los resultados en un sistema compatible con S3 (MinIO).
 
 ## 📋 Tabla de Contenidos
+
 - [Arquitectura del Sistema](#-arquitectura-del-sistema)
 - [Stack Tecnológico](#-stack-tecnológico)
 - [Características Principales](#-características-principales)
@@ -36,6 +37,7 @@ graph LR
     A -- GET /status/:id --> B
     B -- Lee Estado --> F
 ```
+
 1. **API Service (Producer)**: Recibe la imagen, valida metadatos con Zod, sube el archivo crudo a MinIO y encola un trabajo en BullMQ.
 2. **Message Broker**: Redis gestiona la cola de trabajos, asegurando persistencia y reintentos.
 3. **Worker Service (Consumer)**: Proceso aislado que toma trabajos, realiza el procesamiento intensivo de CPU (Sharp) y actualiza el estado.
@@ -45,14 +47,14 @@ graph LR
 
 ## 🚀 Stack Tecnológico
 
-- **Core:** Node.js, TypeScript  
-- **API Framework:** Express.js  
-- **Procesamiento:** Sharp (High performance image processing)  
-- **Colas & Mensajería:** BullMQ, Redis  
-- **Base de Datos:** PostgreSQL (Metadatos y estado de jobs)  
-- **Validación:** Zod (Schema validation)  
+- **Core:** Node.js, TypeScript
+- **API Framework:** Express.js
+- **Procesamiento:** Sharp (High performance image processing)
+- **Colas & Mensajería:** BullMQ, Redis
+- **Base de Datos:** PostgreSQL (Metadatos y estado de jobs)
+- **Validación:** Zod (Schema validation)
 - **Storage:** MinIO (S3 Compatible)  
--- **Infraestructura:** Docker, Docker Compose  
+  -- **Infraestructura:** Docker, Docker Compose
 
 ---
 
@@ -100,11 +102,15 @@ cd pixelforge
 ```
 
 ### Paso 2: Configurar Variables de Entorno
+
 Este comando levantará la API, el Worker, Redis, Postgres y MinIO.
 
 ```bash
 docker-compose up --build -d
 ```
+
+> **Nota:** La primera vez tomará unos minutos mientras se construyen las imágenes optimizadas de la API y el Worker.
+
 **El sistema estará disponible en:**
 
 - **API**: http://localhost:3000
@@ -113,19 +119,22 @@ docker-compose up --build -d
 ---
 
 ## 📡 Documentación de la API
+
 ### 1. Subir una imagen para procesar
+
 - Endpoint: POST `POST /api/v1/jobs`
 - Content-Type: `multipart/form-data`
 
 **Parámetros (Body):**
-| Key       | Tipo   | Descripción                          |
+| Key | Tipo | Descripción |
 | --------- | ------ | ------------------------------------ |
-| imageFile | File   | Archivo de imagen (jpg, png).        |
-| width     | Int    | Ancho deseado (ej: 1280).            |
-| height    | Int    | Alto deseado (ej: 720).              |
-| format    | String | Formato de salida (webp, png, jpeg). |
+| imageFile | File | Archivo de imagen (jpg, png). |
+| width | Int | Ancho deseado (ej: 1280). |
+| height | Int | Alto deseado (ej: 720). |
+| format | String | Formato de salida (webp, png, jpeg). |
 
 **Respuesta Exitosa (202 Accepted):**
+
 ```json
 {
   "success": true,
@@ -138,9 +147,11 @@ docker-compose up --build -d
 ```
 
 ### 2. Consultar estado del trabajo
+
 - **Endpoint:** `GET /api/v1/jobs/:id`
 
 **Respuesta (Procesado):**
+
 ```json
 {
   "jobId": "550e8400-e29b-41d4-a716-446655440000",
@@ -155,6 +166,7 @@ docker-compose up --build -d
 ---
 
 ## 🔐 Variables de Entorno
+
 ```.env
 # Server
 PORT=3000
@@ -179,6 +191,7 @@ S3_USE_SSL=false
 ---
 
 ## 📂 Estructura del Proyecto
+
 ```plaintext
 pixelforge/
 ├── src/
@@ -208,4 +221,5 @@ pixelforge/
 ---
 
 ## 👤 Autor
+
 Desarrollado por Daniel Díaz.
